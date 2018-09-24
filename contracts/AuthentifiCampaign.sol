@@ -9,14 +9,13 @@ contract AuthentifiCampaign {
   struct Recipient { //Recipient information
     bytes32 name; //short name
     bytes32 contactInfo; //phone number
-    int[] auditorsToAssign;
   }
 
   struct Auditor { // Auditors
     address auditorWallet;
-    bool reserved;
-    bytes32[] recipientList;
-    uint[] Recipients;
+    uint recipientCount;
+    bytes32[] recipientAuditList;
+    mapping (uint => Recipient) Recipients;
     mapping(bytes32 => RecipientAudit) AuditStructs;
   }
 
@@ -28,24 +27,56 @@ contract AuthentifiCampaign {
 
   address public owner;
   bytes32 public name;
-  int public maxAuditors;
-  mapping(address => Auditor) Auditors;
-  mapping(uint => Recipient) Recipients;
+  uint public maxAuditors;
+  uint public currentAuditorCount;
+  mapping(address => bool) AcceptableAuditors;
+  mapping(address => Auditor) public Auditors;
+  mapping(uint => Recipient[]) Recipients;
 
   constructor(bytes32 _name) public {
     owner = msg.sender;
     name = _name;
   }
 
-  function setAuditorCount(int count) public {
+  function setAuditorCount(uint count) public { // the required number of auditors for an audit
     if (msg.sender == owner) {
       maxAuditors = count;
     }
   }
-  function setRecipients(Recipient[] _recipients) {
-    _recipients.forEach()
-    emit RecipientsSet(owner, name);
+
+  function setAcceptableAuditors(address[] _accept) public { // this could be a call to a generic list of acceptable auditors elsewhere
+    if (msg.sender == owner) {
+      for (uint i = 0; i < _accept.length; i++) {
+        AcceptableAuditors[_accept[i]] = true;
+      }
+    }
   }
 
+  function setRecipients(Recipient[][] _recipients) public { //a 2d array of recipient lists
+    if (msg.sender == owner) {
+      for (uint i = 0; i <_recipients.length; i++) {
+        Recipients[i] = _recipients[i];
+      }
+      emit RecipientsSet(owner, name);
+    }
+  }
+
+  function reserveAuditSpot() public {
+    if ((AcceptableAuditors[msg.sender] && currentAuditorCount < maxAuditors) && (++currentAuditorCount > 0)) {  //checks if the auditors is approved, if the auditor count is low enough, and iterates the auditor count up by 1
+      Auditors[msg.sender].auditorWallet = msg.sender;
+      uint auditRef = currentAuditorCount;
+      Auditors[msg.sender].recipientCount = Recipients[auditRef].length;
+      for (uint i = 0; i < Recipients[auditRef].length; i++) {
+        Auditors[msg.sender].Recipients[i] = Recipients[auditRef][i];
+      }
+    }
+  }
+
+  function auditRecipient(RecipientAudit audit) public {
+    if (Auditors[msg.sender].recipientCount > 0) {
+      Auditors[msg.sender].recipientAuditList.push(audit.recipient.contactInfo);
+      Auditors[msg.sender].AuditStructs[audit.recipient.contactInfo] = audit;
+    }
+  }
 
 }
