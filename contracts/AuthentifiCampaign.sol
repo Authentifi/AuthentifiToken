@@ -55,7 +55,9 @@ contract AuthentifiCampaign {
   function setRecipients(Recipient[][] _recipients) public { //a 2d array of recipient lists
     if (msg.sender == owner) {
       for (uint i = 0; i <_recipients.length; i++) {
-        Recipients[i] = _recipients[i];
+        for (uint j = 0; j < _recipients[i].length; j++) {
+          Recipients[i].push(_recipients[i][j]);
+        }
       }
       emit RecipientsSet(owner, name);
     }
