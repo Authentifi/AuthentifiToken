@@ -13,7 +13,7 @@ contract AuthentifiAuditToken {
   string public symbol;
   uint public totalSupply;
   mapping(address => AuditorWallet) owners;
-  mapping (address => mapping (address => uint256)) public allowed;
+  mapping(address => mapping (address => uint256)) public allowed;
 
   constructor(
     uint256 _initialAmount,

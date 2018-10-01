@@ -1,6 +1,8 @@
 pragma solidity ^0.4.21;
 pragma experimental ABIEncoderV2;
 
+import './AuditToken.sol';
+
 contract AuthentifiCampaign {
 
   event RecipientsSet(address _owner, bytes32 _name);
@@ -26,29 +28,33 @@ contract AuthentifiCampaign {
   }
 
   address public owner;
+  AuthentifiAuditToken public auditContract;
+  address public auditTokenAddress;
   bytes32 public name;
   uint public maxAuditors;
   uint public currentAuditorCount;
-  mapping(address => bool) AcceptableAuditors;
+  uint256  public minimumTokens;
   mapping(address => Auditor) public Auditors;
   mapping(uint => Recipient[]) Recipients;
 
-  constructor(bytes32 _name) public {
+  constructor(bytes32 _name, address _acceptedTokens, uint256 _minTokens) public {
     owner = msg.sender;
     name = _name;
+    auditContract = AuthentifiAuditToken(_acceptedTokens);
+    auditTokenAddress = _acceptedTokens;
+    minimumTokens = _minTokens;
+  }
+
+  function migrateToken(address _newToken) public {
+      if (msg.sender == owner || msg.sender == auditTokenAddress) {
+        auditContract = AuthentifiAuditToken(_newToken);
+        auditTokenAddress = _newToken;
+      }
   }
 
   function setAuditorCount(uint count) public { // the required number of auditors for an audit
     if (msg.sender == owner) {
       maxAuditors = count;
-    }
-  }
-
-  function setAcceptableAuditors(address[] _accept) public { // this could be a call to a generic list of acceptable auditors elsewhere
-    if (msg.sender == owner) {
-      for (uint i = 0; i < _accept.length; i++) {
-        AcceptableAuditors[_accept[i]] = true;
-      }
     }
   }
 
@@ -64,7 +70,8 @@ contract AuthentifiCampaign {
   }
 
   function reserveAuditSpot() public {
-    if ((AcceptableAuditors[msg.sender] && currentAuditorCount < maxAuditors) && (++currentAuditorCount > 0)) {  //checks if the auditors is approved, if the auditor count is low enough, and iterates the auditor count up by 1
+    if ((auditContract.allowance(msg.sender, address(this))> minimumTokens && currentAuditorCount < maxAuditors) && (++currentAuditorCount > 0)) {  //checks if the auditors is approved, if the auditor count is low enough, and iterates the auditor count up by 1
+      auditContract.transferFrom(msg.sender, address(this), minimumTokens);
       Auditors[msg.sender].auditorWallet = msg.sender;
       uint auditRef = currentAuditorCount;
       Auditors[msg.sender].recipientCount = Recipients[auditRef].length;
