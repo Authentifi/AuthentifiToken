@@ -39,12 +39,12 @@ contract AuthentifiAuditToken {
   }
 
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-    uint256 allowance = allowed[_from][msg.sender];
+    uint256 allowance = allowed[_from][_to];
     require(owners[_from].tokensOwned >= _value && allowance >= _value);
     owners[_to].tokensOwned += _value;
     owners[_from].tokensOwned -= _value;
     if (allowance < MAX_UINT256) {
-      allowed[_from][msg.sender] -= _value;
+      allowed[_from][_to] -= _value;
     }
     emit Transfer(_from, _to, _value);
     return true;
