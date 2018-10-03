@@ -36,7 +36,11 @@ A Campaign contract that contains recipient's anonymized contact info, the audit
 ## Short summary of auditor flow
 
 Auditors stake tokens on a campaign in order to reserve auditing slots within that campaign
+
 Recipients are assigned to auditors
+
 Auditors submit audits on assigned recipients (anonymized)
+
 Audits are resolved together
+
 Results are released publicly
