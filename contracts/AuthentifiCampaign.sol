@@ -70,11 +70,10 @@ contract AuthentifiCampaign {
   }
 
   function reserveAuditSpot() public {
-    if ((auditContract.allowance(msg.sender, address(this))> minimumTokens && currentAuditorCount < maxAuditors) && (++currentAuditorCount > 0)) {  //checks if the auditors is approved, if the auditor count is low enough, and iterates the auditor count up by 1
+    if (auditContract.allowance(msg.sender, address(this))>= minimumTokens && currentAuditorCount < maxAuditors) {  //checks if the auditors is approved, if the auditor count is low enough, and iterates the auditor count up by 1
       auditContract.transferFrom(msg.sender, address(this), minimumTokens);
       Auditors[msg.sender].auditorWallet = msg.sender;
-      uint auditRef = currentAuditorCount;
-      Auditors[msg.sender].recipientCount = Recipients[auditRef].length;
+      Auditors[msg.sender].recipientCount = Recipients[currentAuditorCount++].length;
       for (uint i = 0; i < Recipients[auditRef].length; i++) {
         Auditors[msg.sender].Recipients[i] = Recipients[auditRef][i];
       }
