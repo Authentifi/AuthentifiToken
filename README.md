@@ -24,14 +24,12 @@ An ERC-20 compliant Token for the privilege of staking audits
 
 # AuthentifiCampaign
 
-A Campaign contract that contains recipient's anonymized contact info, the audits of those recipients, and the results of the overall audit
+A Campaign contract that contains recipient's in a hashed merkle tree, the hashedaudits of those recipients, and the root hash of the recipient tree
 
-* migrateToken(address) New address of a migrated Token contract (last resort)
 * setAuditorCount(count) Set the number of auditors needed for auditing to begin
-* setRecipients(recipient) Set a recipient list for auditors to audit
 * reserveAuditSpot() Auditor reserves a spot using tokens set for credit
-* auditRecipient(audit) Auditor submits a recipient audit
-* auditResults() Returns the results of the audit of the campaign
+* uploadRecipients(hash) Auditor submits an off chain sourced list of recipients, hashed so as to validate the root merkle tree hash
+* uploadRecipientResults() Auditor submits the recipient results hashed for the purpose of verifying completion and veracity of other sources of the results in future
 
 ## Short summary of auditor flow
 
