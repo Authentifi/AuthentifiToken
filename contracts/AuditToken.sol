@@ -26,11 +26,11 @@ contract AuthentifiAuditToken {
     symbol = _tokenSymbol;
   }
 
-  function balanceOf(address tokenOwner) public view returns (uint) {
+  function balanceOf(address tokenOwner) public view returns (uint balance) {
     return owners[tokenOwner].tokensOwned;
   }
 
-  function transfer(address _to, uint256 _value) public returns (bool) {
+  function transfer(address _to, uint256 _value) public returns (bool success) {
     require(owners[msg.sender].tokensOwned >= _value);
     owners[msg.sender].tokensOwned -= _value;
     owners[_to].tokensOwned += _value;
@@ -38,7 +38,7 @@ contract AuthentifiAuditToken {
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
     uint256 allowance = allowed[_from][_to];
     require(owners[_from].tokensOwned >= _value && allowance >= _value);
     owners[_to].tokensOwned += _value;
@@ -50,13 +50,13 @@ contract AuthentifiAuditToken {
     return true;
   }
 
-  function approve(address _spender, uint256 _value) public returns (bool) {
+  function approve(address _spender, uint256 _value) public returns (bool success) {
     allowed[msg.sender][_spender] = _value;
     emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
-  function allowance(address _owner, address _spender) public view returns (uint256) {
+  function allowance(address _owner, address _spender) public view returns (uint256 credit) {
     return allowed[_owner][_spender];
   }
 
