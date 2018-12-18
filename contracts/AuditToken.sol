@@ -57,6 +57,8 @@ contract AuthentifiAuditToken {
     owners[_from].tokensOwned -= _value;
     if (allowance < MAX_UINT256) {  // this conditional prevents uint underflow
       allowed[_from][msg.sender] -= _value;
+    } else {
+      allowed[_from][msg.sender] = 0;
     }
     emit Transfer(_from, _to, _value);
     return true;

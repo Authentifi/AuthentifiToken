@@ -23,7 +23,7 @@ contract AuthentifiCampaign {
   address public owner;  // owner of the campaign
   AuthentifiAuditToken public auditContract; // the audit token contract to be used (important in cases of migrations)
   address public auditTokenAddress; // the address of the audit token contract
-  bytes32 public name; // name of the campaign
+  string public name; // name of the campaign
   uint public maxAuditors; // maximum auditor count
   uint public currentAuditorCount; // current auditor count
   uint256  public minimumTokens; // minimum tokens required to audit
@@ -35,7 +35,7 @@ contract AuthentifiCampaign {
   bytes32 public RecipientRootHash; // the root hash of recipients
 
   // initial constructor
-  constructor(bytes32 _name, address _acceptedTokens, uint256 _minTokens, bytes32 RootHash) public {
+  constructor(string _name, address _acceptedTokens, uint256 _minTokens, bytes32 RootHash, uint count) public {
     owner = msg.sender; // owner of the campaign
     name = _name; // name of the campaign
     auditContract = AuthentifiAuditToken(_acceptedTokens); // set audit contract
@@ -44,13 +44,7 @@ contract AuthentifiCampaign {
     RecipientRootHash = RootHash; // root hash for recipients
     finalResult = 0; // the final percentage result
     complete = false;
-  }
-
-  // set the max auditor count
-  function setAuditorCount(uint count) public { // the required number of auditors for an audit
-    if (msg.sender == owner) {
-      maxAuditors = count; // the maximum auditors
-    }
+    maxAuditors = count; // maximum auditors
   }
 
   // set the recipient hash by auditor address
@@ -60,9 +54,24 @@ contract AuthentifiCampaign {
     }
   }
 
+  // reserve an audit spot
+  function reserveAuditSpot() public {
+    //checks if the auditor count is low enough, and the auditor has enough tokens
+    if (auditContract.allowance(msg.sender, address(this))>= minimumTokens && currentAuditorCount < maxAuditors) {
+      auditContract.transferFrom(msg.sender, address(this), minimumTokens); //transfers the tokens to this contract
+      Auditors[msg.sender].auditorWallet = msg.sender;
+      Auditors[msg.sender].resultSet = false;
+      Auditors[msg.sender].exists = true;
+      currentAuditorCount += 1;
+      AuditorList.push(msg.sender);
+      emit AuditorAdded(msg.sender, minimumTokens, address(this));
+    }
+  }
+
   // Auditor uploads their results
   function uploadRecipientResults(int recipientResults) public {
     // If the sender is an auditor and the process isn't finished, set the results value
+    //  TODO: verification of hash of subtree, this will all be a merkle hash process
     if (Auditors[msg.sender].exists && !complete) {
       Auditors[msg.sender].RecipientResults = recipientResults;
 
@@ -73,6 +82,9 @@ contract AuthentifiCampaign {
         emit AuditorComplete(msg.sender, recipientResults);
 
         // if this is the last auditor to submit, run the final validation and set the final result, paying back auditors close to the final result
+        /*
+         * This function can fire on either: every submission, campaign owner runs it, final submission
+        */
         if (resultsCount >= maxAuditors && finalResult == 0) {
           int temp = 0;
           for (uint i = 0; i < AuditorList.length; i++) {
@@ -97,19 +109,6 @@ contract AuthentifiCampaign {
           complete = true; // set the campaign as complete
         }
       }
-    }
-  }
-
-  function reserveAuditSpot() public {
-    //checks if the auditor count is low enough, and the auditor has enough tokens
-    if (auditContract.allowance(msg.sender, address(this))>= minimumTokens && currentAuditorCount < maxAuditors) {
-      auditContract.transferFrom(msg.sender, address(this), minimumTokens); //transfers the tokens to this contract
-      Auditors[msg.sender].auditorWallet = msg.sender;
-      Auditors[msg.sender].resultSet = false;
-      Auditors[msg.sender].exists = true;
-      currentAuditorCount += 1;
-      AuditorList.push(msg.sender);
-      emit AuditorAdded(msg.sender, minimumTokens, address(this));
     }
   }
 }
